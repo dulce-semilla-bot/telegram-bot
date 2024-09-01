@@ -56,4 +56,21 @@ def webhook():
 
 # Función para enviar mensajes a Telegram
 def telegram_bot_sendtext(chat_id, bot_message):
-    send_text
+    send_text = f'https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={bot_message}'
+    response = requests.get(send_text)
+    return response.json()
+
+# Configurar el webhook al iniciar la aplicación
+@app.before_first_request
+def setup_webhook():
+    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+    webhook_url = f'{render_url}/webhook'
+
+    set_webhook_url = f'https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}'
+    response = requests.get(set_webhook_url)
+    print(response.json())
+
+# Ejecutar la aplicación Flask
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))  # Usa el puerto asignado por Render
+    app.run(host='0.0.0.0', port=port)

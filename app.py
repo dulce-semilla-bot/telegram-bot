@@ -6,10 +6,9 @@ from hugchat.login import Login
 
 app = Flask(__name__)
 
-# Obtener credenciales desde variables de entorno
+# Ingresar las credenciales de inicio de sesión en huggingface
 email = os.environ.get('HF_EMAIL')
 password = os.environ.get('HF_PASSWORD')
-bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
 
 # Crear una instancia de la clase Login con las credenciales
 sign = Login(email, password)
@@ -56,13 +55,14 @@ def webhook():
 
 # Función para enviar mensajes a Telegram
 def telegram_bot_sendtext(chat_id, bot_message):
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
     send_text = f'https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={bot_message}'
     response = requests.get(send_text)
     return response.json()
 
-# Configurar el webhook al iniciar la aplicación
-@app.before_first_request
+@app.before_request
 def setup_webhook():
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
     render_url = os.environ.get('RENDER_EXTERNAL_URL')
     webhook_url = f'{render_url}/webhook'
 
@@ -70,7 +70,5 @@ def setup_webhook():
     response = requests.get(set_webhook_url)
     print(response.json())
 
-# Ejecutar la aplicación Flask
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))  # Usa el puerto asignado por Render
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

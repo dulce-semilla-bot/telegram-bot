@@ -41,12 +41,8 @@ def webhook():
         telegram_bot_sendtext(chat_id, "ChatBot: ¡Hola! Soy un bot diseñado para abordar preguntas en el amplio campo de la salud. Mi especialización me permite proporcionar respuestas precisas y útiles en temas relacionados con la salud o más, no olvides recalcar el idioma en el que hablaremos. ¿En qué puedo ayudarte hoy?")
         return '', 200
 
-    # Cambiar a la conversación actual
-    conversation_id = chatbot.new_conversation()
-    chatbot.change_conversation(conversation_id)
-
     # Obtener la respuesta del chatbot
-    response = chatbot.query(user_message)
+    response = chatbot.chat(user_message)  # Método correcto para obtener respuesta
 
     # Enviar la respuesta del chatbot al usuario de Telegram
     telegram_bot_sendtext(chat_id, f"ChatBot: {response}")

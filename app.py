@@ -6,47 +6,58 @@ from hugchat.login import Login
 
 app = Flask(__name__)
 
-# Ingresar las credenciales de inicio de sesión en huggingface
+# Obtener las credenciales de Hugging Face
 email = os.environ.get('HF_EMAIL')
 password = os.environ.get('HF_PASSWORD')
 
-# Crear una instancia de la clase Login con las credenciales
-sign = Login(email, password)
-
 # Iniciar sesión y obtener las cookies
-cookies = sign.login()
+try:
+    sign = Login(email, password)
+    cookies = sign.login()
+except Exception as e:
+    print(f"Error al autenticar en Hugging Face: {e}")
+    cookies = None
 
-# Crear una instancia de ChatBot con las cookies de autenticación
-chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
+# Crear instancia del ChatBot
+try:
+    if cookies:
+        chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
+    else:
+        raise ValueError("No se pudo obtener las cookies.")
+except Exception as e:
+    print(f"Error al inicializar ChatBot: {e}")
+    chatbot = None
 
 # Ruta para manejar mensajes de Telegram
 @app.route('/webhook', methods=['POST'])
 def webhook():
+    if not chatbot:
+        return "ChatBot no está disponible.", 500
+
     data = request.get_json()
     chat_id = data['message']['chat']['id']
     user_message = data['message']['text']
 
-    # Definir comando de inicio
+    # Comando de inicio
     START_COMMAND = '/start'
-
-    # Salir del bucle si se recibe un mensaje de despedida
     GOODBYE_MESSAGES = ['salir', 'adios', 'adiós', 'bay', 'chao', 'hasta luego', 'eso es todo', 'adiosito']
+
     if user_message.lower() in GOODBYE_MESSAGES:
         telegram_bot_sendtext(chat_id, "ChatBot: Hasta luego.")
         return '', 200
 
-    # Verificar si se recibe el comando de inicio
     if user_message.lower() == START_COMMAND:
-        # Enviar mensaje de bienvenida
-        telegram_bot_sendtext(chat_id, "ChatBot: ¡Hola! Soy un bot diseñado para abordar preguntas en el amplio campo de la salud. Mi especialización me permite proporcionar respuestas precisas y útiles en temas relacionados con la salud o más, no olvides recalcar el idioma en el que hablaremos. ¿En qué puedo ayudarte hoy?")
+        telegram_bot_sendtext(chat_id, "ChatBot: ¡Hola! Soy un bot diseñado para responder preguntas sobre salud. Indica en qué idioma hablaremos.")
         return '', 200
 
     # Obtener la respuesta del chatbot
-    response = chatbot.chat(user_message)  # Método correcto para obtener respuesta
-
-    # Enviar la respuesta del chatbot al usuario de Telegram
-    telegram_bot_sendtext(chat_id, f"ChatBot: {response}")
-
+    try:
+        response = chatbot.chat(user_message)
+        telegram_bot_sendtext(chat_id, f"ChatBot: {response}")
+    except Exception as e:
+        print(f"Error al obtener respuesta del ChatBot: {e}")
+        telegram_bot_sendtext(chat_id, "ChatBot: Lo siento, ocurrió un error. Intenta nuevamente más tarde.")
+    
     return '', 200
 
 # Función para enviar mensajes a Telegram
@@ -68,3 +79,4 @@ def setup_webhook():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+

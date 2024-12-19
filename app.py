@@ -1,60 +1,44 @@
-import os
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 import hugchat
+import requests
 
-# Configurar la aplicación Flask
+# Inicializamos Flask
 app = Flask(__name__)
 
-# Usar el puerto proporcionado por Render
-port = os.getenv('PORT', 10000)  # Si no se encuentra el puerto, usa 10000 por defecto
+# Variable de control para ejecutar algo solo una vez
+has_run = False
+
+# Se crea una instancia de ChatBot de HugChat
+def initialize_chatbot():
+    global chatbot
+    try:
+        # Aquí debes autenticarte con Hugging Face (con cookies o login)
+        sign = hugchat.login.HuggingFaceLogin()
+        cookies = sign.login()
+        chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
+        print("ChatBot inicializado con éxito.")
+    except Exception as e:
+        print(f"Error al autenticar en Hugging Face: {str(e)}")
+
+@app.before_request
+def before_request():
+    global has_run
+    if not has_run:
+        print("Este código solo se ejecuta una vez antes del primer request.")
+        initialize_chatbot()
+        has_run = True
 
 @app.route('/')
 def index():
-    return "¡Aplicación en línea!"
+    return "¡Hola! El bot está en funcionamiento."
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    try:
-        data = request.json  # Asumiendo que los datos llegan en formato JSON
-        # Aquí puedes procesar el webhook como necesites
-        return jsonify({"ok": True, "result": True, "description": "Webhook received successfully."}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Aquí puedes procesar las peticiones del webhook
+    return jsonify({"ok": True, "result": True, "description": "Webhook is already set"})
 
-# Inicialización de Hugging Face con manejo de errores
-def initialize_chatbot():
-    try:
-        cookies = hugchat.login()  # Intentar autenticar
-        chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
-        return chatbot
-    except Exception as e:
-        print(f"Error al autenticar en Hugging Face: {str(e)}")
-        return None
-
-# Configurar antes de la primera solicitud si es necesario
-@app.before_first_request
-def before_first_request():
-    global chatbot
-    chatbot = initialize_chatbot()
-    if chatbot:
-        print("Chatbot inicializado correctamente.")
-    else:
-        print("Error al inicializar el chatbot.")
-
-# Ruta de prueba para el chatbot
-@app.route('/chat', methods=['GET', 'POST'])
-def chat():
-    if request.method == 'POST':
-        user_input = request.json.get('message')
-        if chatbot:
-            response = chatbot.chat(user_input)  # Suponiendo que el chatbot tenga este método
-            return jsonify({"response": response}), 200
-        else:
-            return jsonify({"error": "El chatbot no está disponible."}), 500
-    return jsonify({"message": "Envía un mensaje para chatear."}), 200
-
-# Ejecutar la aplicación Flask en el puerto correcto
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    # Iniciar la aplicación en el puerto 10000 (definido por Render)
+    app.run(host="0.0.0.0", port=10000)
 
 

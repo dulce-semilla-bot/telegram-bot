@@ -56,20 +56,15 @@ def telegram_bot_sendtext(chat_id, bot_message):
     response = requests.get(send_text)
     return response.json()
 
-@app.route('/setup-webhook', methods=['GET'])
+@app.before_request
 def setup_webhook():
-    # Esta ruta debe ser llamada una vez para configurar el webhook
     bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
     render_url = os.environ.get('RENDER_EXTERNAL_URL')
     webhook_url = f'{render_url}/webhook'
 
     set_webhook_url = f'https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}'
     response = requests.get(set_webhook_url)
-    print(response.json())  # Verificar la respuesta para asegurar que el webhook fue configurado correctamente
-
-    return 'Webhook configurado con éxito', 200
+    print(response.json())
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
-

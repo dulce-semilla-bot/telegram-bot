@@ -6,7 +6,7 @@ from hugchat.login import Login
 
 app = Flask(__name__)
 
-# Obtener las credenciales de inicio de sesión en Hugging Face
+# Ingresar las credenciales de inicio de sesión en huggingface
 email = os.environ.get('HF_EMAIL')
 password = os.environ.get('HF_PASSWORD')
 
@@ -23,40 +23,26 @@ chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
-
-    if not data or 'message' not in data:
-        return '', 200
-
     chat_id = data['message']['chat']['id']
     user_message = data['message']['text']
 
-    # Comando de inicio
+    # Definir comando de inicio
     START_COMMAND = '/start'
 
-    # Mensajes de despedida
+    # Salir del bucle si se recibe un mensaje de despedida
     GOODBYE_MESSAGES = ['salir', 'adios', 'adiós', 'bay', 'chao', 'hasta luego', 'eso es todo', 'adiosito']
-
-    # Manejar el comando /start
-    if user_message.lower() == START_COMMAND:
-        welcome_message = (
-            "ChatBot: ¡Hola! Soy un bot diseñado para abordar preguntas en el amplio campo de la salud. "
-            "Mi especialización me permite proporcionar respuestas precisas y útiles en temas relacionados con la salud o más. "
-            "No olvides recalcar el idioma en el que hablaremos. ¿En qué puedo ayudarte hoy?"
-        )
-        telegram_bot_sendtext(chat_id, welcome_message)
+    if user_message.lower() in GOODBYE_MESSAGES:
+        telegram_bot_sendtext(chat_id, "ChatBot: Hasta luego.")
         return '', 200
 
-    # Manejar mensajes de despedida
-    if user_message.lower() in GOODBYE_MESSAGES:
-        goodbye_message = "ChatBot: Hasta luego. ¡Espero verte de nuevo pronto! 😊"
-        telegram_bot_sendtext(chat_id, goodbye_message)
+    # Verificar si se recibe el comando de inicio
+    if user_message.lower() == START_COMMAND:
+        # Enviar mensaje de bienvenida
+        telegram_bot_sendtext(chat_id, "ChatBot: ¡Hola! Soy un bot diseñado para abordar preguntas en el amplio campo de la salud. Mi especialización me permite proporcionar respuestas precisas y útiles en temas relacionados con la salud o más, no olvides recalcar el idioma en el que hablaremos. ¿En qué puedo ayudarte hoy?")
         return '', 200
 
     # Obtener la respuesta del chatbot
-    try:
-        response = chatbot.chat(user_message)
-    except Exception as e:
-        response = "Lo siento, no puedo procesar tu mensaje en este momento. Por favor, inténtalo más tarde."
+    response = chatbot.chat(user_message)  # Método correcto para obtener respuesta
 
     # Enviar la respuesta del chatbot al usuario de Telegram
     telegram_bot_sendtext(chat_id, f"ChatBot: {response}")
@@ -70,8 +56,8 @@ def telegram_bot_sendtext(chat_id, bot_message):
     response = requests.get(send_text)
     return response.json()
 
-# Configurar el webhook al inicio
-@app.before_first_request
+# Inicializar el webhook al arrancar la aplicación
+@app.before_request
 def setup_webhook():
     bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
     render_url = os.environ.get('RENDER_EXTERNAL_URL')
@@ -79,9 +65,11 @@ def setup_webhook():
 
     set_webhook_url = f'https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}'
     response = requests.get(set_webhook_url)
-    print("Webhook setup response:", response.json())
+    if not response.ok:
+        print("Error configurando el webhook:", response.json())
+    else:
+        print("Webhook configurado exitosamente:", response.json())
 
-# Iniciar el servidor Flask
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 

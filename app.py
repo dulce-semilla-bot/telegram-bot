@@ -45,7 +45,7 @@ def webhook():
     chatbot.change_conversation(conversation_id)
 
     # Obtener la respuesta del chatbot
-    response = chatbot.query(user_message)
+    response = chatbot.chat(user_message)  # Método correcto para obtener respuesta
 
     # Enviar la respuesta del chatbot al usuario de Telegram
     telegram_bot_sendtext(chat_id, f"ChatBot: {response}")

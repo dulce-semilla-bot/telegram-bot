@@ -5,9 +5,9 @@ from hugchat.login import Login
 
 app = Flask(__name__)
 
-# Credenciales de Hugging Face
-email = 'annabelrodriguezl679@gmail.com'  # Reemplaza con tus credenciales
-password = 'Fernando_555'  # Reemplaza con tus credenciales
+# Ingresar las credenciales de inicio de sesión en Hugging Face
+email = 'annabelrodriguezl679@gmail.com'  # Reemplaza con tu correo
+password = 'Fernando_555'  # Reemplaza con tu contraseña
 
 # Crear una instancia de la clase Login con las credenciales
 sign = Login(email, password)
@@ -61,10 +61,10 @@ def telegram_bot_sendtext(chat_id, bot_message):
 
 # Configurar el webhook al iniciar la aplicación
 if __name__ == '__main__':
-    # URL de la app en Render (asegúrate de usar la URL proporcionada por Render)
-    render_url = 'https://<tu-app>.onrender.com'  # Reemplaza <tu-app> con tu subdominio Render
+    # URL pública proporcionada por Render después del despliegue
+    render_url = 'https://telegram-bot-z1tv.onrender.com'  # URL pública de tu aplicación en Render
     bot_token = '6918162572:AAG-J0rrIBhv1LGcXn_-occ6_QV7uT39sJU'  # Reemplaza con tu token de Telegram
-    webhook_url = f'{render_url}/webhook'
+    webhook_url = f'{render_url}/webhook'  # URL del webhook que va a recibir Telegram
 
     # Configurar el webhook de Telegram
     set_webhook_url = f'https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}'
@@ -73,3 +73,4 @@ if __name__ == '__main__':
 
     # Ejecutar la aplicación Flask
     app.run(host='0.0.0.0', port=8080)
+

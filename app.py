@@ -6,7 +6,7 @@ from hugchat.login import Login
 
 app = Flask(__name__)
 
-# Ingresar las credenciales de inicio de sesión en huggingface
+# Ingresar las credenciales de inicio de sesión en HuggingFace
 email = os.environ.get('HF_EMAIL')
 password = os.environ.get('HF_PASSWORD')
 
@@ -15,9 +15,6 @@ sign = Login(email, password)
 
 # Iniciar sesión y obtener las cookies
 cookies = sign.login()
-
-# Crear una instancia de ChatBot con las cookies de autenticación
-chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
 
 # Ruta para manejar mensajes de Telegram
 @app.route('/webhook', methods=['POST'])
@@ -40,6 +37,9 @@ def webhook():
         # Enviar mensaje de bienvenida
         telegram_bot_sendtext(chat_id, "ChatBot: ¡Hola! Soy un bot diseñado para abordar preguntas en el amplio campo de la salud. Mi especialización me permite proporcionar respuestas precisas y útiles en temas relacionados con la salud o más, no olvides recalcar el idioma en el que hablaremos. ¿En qué puedo ayudarte hoy?")
         return '', 200
+
+    # Crear una nueva instancia del ChatBot para cada mensaje
+    chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
 
     # Obtener la respuesta del chatbot
     response = chatbot.chat(user_message)  # Método correcto para obtener respuesta
@@ -72,6 +72,8 @@ def setup_webhook():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+
 
 
 

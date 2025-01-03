@@ -1,4 +1,3 @@
-import os
 import requests
 from flask import Flask, request
 from hugchat import hugchat
@@ -6,9 +5,9 @@ from hugchat.login import Login
 
 app = Flask(__name__)
 
-# Ingresar las credenciales de inicio de sesión en huggingface
-email = os.environ.get('HF_EMAIL')
-password = os.environ.get('HF_PASSWORD')
+# Credenciales de Hugging Face
+email = 'annabelrodriguezl679@gmail.com'  # Reemplaza con tus credenciales
+password = 'Fernando_555'  # Reemplaza con tus credenciales
 
 # Crear una instancia de la clase Login con las credenciales
 sign = Login(email, password)
@@ -41,8 +40,12 @@ def webhook():
         telegram_bot_sendtext(chat_id, "ChatBot: ¡Hola! Soy un bot diseñado para abordar preguntas en el amplio campo de la salud. Mi especialización me permite proporcionar respuestas precisas y útiles en temas relacionados con la salud o más, no olvides recalcar el idioma en el que hablaremos. ¿En qué puedo ayudarte hoy?")
         return '', 200
 
+    # Cambiar a la conversación actual
+    conversation_id = chatbot.new_conversation()
+    chatbot.change_conversation(conversation_id)
+
     # Obtener la respuesta del chatbot
-    response = chatbot.chat(user_message)  # Método correcto para obtener respuesta
+    response = chatbot.query(user_message)
 
     # Enviar la respuesta del chatbot al usuario de Telegram
     telegram_bot_sendtext(chat_id, f"ChatBot: {response}")
@@ -51,20 +54,22 @@ def webhook():
 
 # Función para enviar mensajes a Telegram
 def telegram_bot_sendtext(chat_id, bot_message):
-    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    bot_token = '6918162572:AAG-J0rrIBhv1LGcXn_-occ6_QV7uT39sJU'  # Reemplaza con tu token de Telegram
     send_text = f'https://api.telegram.org/bot{bot_token}/sendMessage?chat_id={chat_id}&text={bot_message}'
     response = requests.get(send_text)
     return response.json()
 
-@app.before_request
-def setup_webhook():
-    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
-    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+# Configurar el webhook al iniciar la aplicación
+if __name__ == '__main__':
+    # URL de la app en Render (asegúrate de usar la URL proporcionada por Render)
+    render_url = 'https://<tu-app>.onrender.com'  # Reemplaza <tu-app> con tu subdominio Render
+    bot_token = '6918162572:AAG-J0rrIBhv1LGcXn_-occ6_QV7uT39sJU'  # Reemplaza con tu token de Telegram
     webhook_url = f'{render_url}/webhook'
 
+    # Configurar el webhook de Telegram
     set_webhook_url = f'https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}'
     response = requests.get(set_webhook_url)
-    print(response.json())
+    print(response.json())  # Imprime la respuesta de la configuración del webhook
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    # Ejecutar la aplicación Flask
+    app.run(host='0.0.0.0', port=8080)

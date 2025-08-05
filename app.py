@@ -1,4 +1,4 @@
-# Actualización de credenciales HuggingFace
+# El servicio de Hugging Face que usaba ya no está disponible
 
 import os
 import requests
